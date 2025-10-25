@@ -231,6 +231,12 @@
                 <input type="text" id="expireDate" placeholder="Contoh: 01 November 2025" value="01 November 2025">
             </div>
             
+            <div class="form-group">
+                <label>Nama File Excel:</label>
+                <input type="text" id="fileName" placeholder="Contoh: XL_Barcode_Data" value="XL_Barcode_Data">
+                <p class="info-text">Nama file yang akan didownload (tanpa .xlsx)</p>
+            </div>
+            
             <div class="row">
                 <div class="form-group">
                     <label>Serial Number Awal:</label>
@@ -319,7 +325,7 @@
             // Show first 30 serials
             for (let i = 0; i < Math.min(30, serials.length); i++) {
                 const div = document.createElement('div');
-                div.textContent = `${i + 1}. ${serials[i]}`;
+                div.textContent = serials[i];
                 div.style.color = '#333';
                 previewDiv.appendChild(div);
             }
@@ -352,6 +358,10 @@
             const expireDate = document.getElementById('expireDate').value || '-';
             const startSN = document.getElementById('startSN').value || '-';
             const endSN = document.getElementById('endSN').value || '-';
+            let fileName = document.getElementById('fileName').value.trim() || 'Barcode_Data';
+            
+            // Clean filename (remove special characters)
+            fileName = fileName.replace(/[^a-zA-Z0-9_\-]/g, '_');
             
             // Check if serials are generated
             if (generatedSerials.length === 0) {
@@ -392,10 +402,10 @@
             // Add worksheet to workbook
             XLSX.utils.book_append_sheet(wb, ws, 'Barcode Data');
 
-            // Generate Excel file
-            XLSX.writeFile(wb, 'XL_Barcode_Data.xlsx');
+            // Generate Excel file with custom filename
+            XLSX.writeFile(wb, fileName + '.xlsx');
             
-            showSuccess(`✅ File Excel berhasil didownload dengan ${generatedSerials.length} serial numbers! Cek folder Downloads Anda.`);
+            showSuccess(`✅ File "${fileName}.xlsx" berhasil didownload dengan ${generatedSerials.length} serial numbers! Cek folder Downloads Anda.`);
         }
         
         function showSuccess(message) {

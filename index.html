@@ -108,14 +108,25 @@
         
         .serial-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            grid-template-columns: auto 1fr;
             gap: 8px;
             font-family: monospace;
             font-size: 12px;
+            align-items: center;
+        }
+        
+        .serial-number {
+            color: #999;
+            text-align: right;
+            padding-right: 10px;
+            font-weight: bold;
+        }
+        
+        .serial-value {
+            color: #333;
         }
         
         .btn {
-            width: 100%;
             font-size: 18px;
             font-weight: bold;
             padding: 18px;
@@ -266,9 +277,14 @@
             </div>
         </div>
         
-        <button class="btn download-btn" onclick="downloadExcel()">
-            📥 DOWNLOAD FILE EXCEL
-        </button>
+        <div class="row">
+            <button class="btn download-btn" onclick="downloadExcel()">
+                📥 DOWNLOAD (Default)
+            </button>
+            <button class="btn download-btn" onclick="downloadExcelWithPicker()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                📂 PILIH LOKASI SAVE
+            </button>
+        </div>
         
         <div class="success-message" id="successMessage"></div>
         <div class="error-message" id="errorMessage"></div>
@@ -322,12 +338,17 @@
             const previewDiv = document.getElementById('serialPreview');
             previewDiv.innerHTML = '';
             
-            // Show first 30 serials
+            // Show first 30 serials with numbering
             for (let i = 0; i < Math.min(30, serials.length); i++) {
-                const div = document.createElement('div');
-                div.textContent = serials[i];
-                div.style.color = '#333';
-                previewDiv.appendChild(div);
+                const numDiv = document.createElement('div');
+                numDiv.className = 'serial-number';
+                numDiv.textContent = (i + 1) + '.';
+                previewDiv.appendChild(numDiv);
+                
+                const valDiv = document.createElement('div');
+                valDiv.className = 'serial-value';
+                valDiv.textContent = serials[i];
+                previewDiv.appendChild(valDiv);
             }
             
             // Add "and more" message
@@ -337,6 +358,8 @@
                 moreDiv.style.color = '#999';
                 moreDiv.style.fontStyle = 'italic';
                 moreDiv.style.gridColumn = '1 / -1';
+                moreDiv.style.textAlign = 'center';
+                moreDiv.style.marginTop = '10px';
                 previewDiv.appendChild(moreDiv);
             }
             
@@ -347,17 +370,6 @@
         }
 
         function downloadExcel() {
-            // Get form values
-            const customer = document.getElementById('customer').value || '-';
-            const denomination = document.getElementById('denomination').value || '-';
-            const vendor = document.getElementById('vendor').value || '-';
-            const vendorCode = document.getElementById('vendorCode').value || '-';
-            const quantity = document.getElementById('quantity').value || '-';
-            const boxNumber1 = document.getElementById('boxNumber1').value || '-';
-            const boxNumber2 = document.getElementById('boxNumber2').value || '-';
-            const expireDate = document.getElementById('expireDate').value || '-';
-            const startSN = document.getElementById('startSN').value || '-';
-            const endSN = document.getElementById('endSN').value || '-';
             let fileName = document.getElementById('fileName').value.trim() || 'Barcode_Data';
             
             // Clean filename (remove special characters)
@@ -369,43 +381,100 @@
                 return;
             }
             
-            // Create worksheet data
-            const wsData = [
-                ['CUSTOMER', customer],
-                ['DENOMINATION', denomination],
-                ['VENDOR', `${vendor} (${vendorCode})`],
-                ['QUANTITY', quantity],
-                ['BOX NUMBER 1', boxNumber1],
-                ['BOX NUMBER 2', boxNumber2],
-                ['EXPIRE DATE', expireDate],
-                ['START S/N', startSN],
-                ['END S/N', endSN],
-                [],
-                ['NO', 'SERIAL NUMBER']
-            ];
+            // Create worksheet data - ONLY serial numbers WITHOUT header
+            const wsData = [];
             
             // Add all serial numbers
-            generatedSerials.forEach((sn, idx) => {
-                wsData.push([idx + 1, sn]);
+            generatedSerials.forEach((sn) => {
+                wsData.push([sn]);
             });
 
             // Create workbook and worksheet
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-            // Set column widths
+            // Set column width
             ws['!cols'] = [
-                { wch: 15 },
-                { wch: 30 }
+                { wch: 20 }
             ];
 
             // Add worksheet to workbook
-            XLSX.utils.book_append_sheet(wb, ws, 'Barcode Data');
+            XLSX.utils.book_append_sheet(wb, ws, 'Serial Numbers');
 
             // Generate Excel file with custom filename
             XLSX.writeFile(wb, fileName + '.xlsx');
             
             showSuccess(`✅ File "${fileName}.xlsx" berhasil didownload dengan ${generatedSerials.length} serial numbers! Cek folder Downloads Anda.`);
+        }
+
+        async function downloadExcelWithPicker() {
+            let fileName = document.getElementById('fileName').value.trim() || 'Barcode_Data';
+            
+            // Clean filename (remove special characters)
+            fileName = fileName.replace(/[^a-zA-Z0-9_\-]/g, '_');
+            
+            // Check if serials are generated
+            if (generatedSerials.length === 0) {
+                showError('Silakan generate serial numbers terlebih dahulu!');
+                return;
+            }
+
+            // Check if File System Access API is supported
+            if (!window.showSaveFilePicker) {
+                showError('Browser Anda tidak mendukung fitur ini. Silakan gunakan tombol "DOWNLOAD (Default)" atau gunakan browser Chrome/Edge terbaru.');
+                return;
+            }
+
+            try {
+                // Create worksheet data - ONLY serial numbers WITHOUT header
+                const wsData = [];
+                
+                // Add all serial numbers
+                generatedSerials.forEach((sn) => {
+                    wsData.push([sn]);
+                });
+
+                // Create workbook and worksheet
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+                // Set column width
+                ws['!cols'] = [
+                    { wch: 20 }
+                ];
+
+                // Add worksheet to workbook
+                XLSX.utils.book_append_sheet(wb, ws, 'Serial Numbers');
+
+                // Generate Excel file as array buffer
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+
+                // Show save file picker
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: fileName + '.xlsx',
+                    types: [{
+                        description: 'Excel Files',
+                        accept: {
+                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+                        }
+                    }]
+                });
+
+                // Write file to selected location
+                const writable = await handle.createWritable();
+                await writable.write(wbout);
+                await writable.close();
+
+                // Show alert popup
+                alert(`✅ BERHASIL!\n\nFile "${fileName}.xlsx" telah disimpan dengan ${generatedSerials.length} serial numbers di lokasi yang Anda pilih!`);
+                
+                showSuccess(`✅ File "${fileName}.xlsx" berhasil disimpan dengan ${generatedSerials.length} serial numbers di lokasi yang Anda pilih!`);
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    showError('Gagal menyimpan file: ' + error.message);
+                }
+                // If user cancels, do nothing
+            }
         }
         
         function showSuccess(message) {

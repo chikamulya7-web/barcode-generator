@@ -31,8 +31,16 @@
         h1 {
             text-align: center;
             color: #333;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
             font-size: 32px;
+        }
+        
+        .powered-by {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 25px;
+            font-style: italic;
         }
         
         .form-box {
@@ -60,7 +68,7 @@
             font-size: 14px;
         }
         
-        input, textarea {
+        input {
             width: 100%;
             padding: 12px;
             border: 2px solid #ddd;
@@ -69,7 +77,7 @@
             transition: border 0.3s;
         }
         
-        input:focus, textarea:focus {
+        input:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -141,6 +149,7 @@
             background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
             color: white;
             box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
+            width: 100%;
         }
         
         .generate-btn:hover {
@@ -194,70 +203,27 @@
 <body>
     <div class="container">
         <h1>📦 Barcode to Excel Generator</h1>
+        <p class="powered-by">Powered by Marketing</p>
         
         <div class="form-box">
             <h2>Isi Data Barcode</h2>
             
             <div class="form-group">
-                <label>Customer:</label>
-                <input type="text" id="customer" placeholder="Contoh: PT. XL AXIATA Tbk" value="PT. XL AXIATA Tbk">
-            </div>
-            
-            <div class="form-group">
-                <label>Denomination:</label>
-                <input type="text" id="denomination" placeholder="Contoh: XL 3IN1 NEW WG DESIGN" value="XL 3IN1 NEW WG DESIGN">
-            </div>
-            
-            <div class="row">
-                <div class="form-group">
-                    <label>Vendor:</label>
-                    <input type="text" id="vendor" placeholder="Contoh: PT. PURA BARUTAMA" value="PT. PURA BARUTAMA">
-                </div>
-                
-                <div class="form-group">
-                    <label>Vendor Code:</label>
-                    <input type="text" id="vendorCode" placeholder="Contoh: 72" value="72">
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label>Quantity:</label>
-                <input type="text" id="quantity" placeholder="Contoh: 100 Card Body" value="100 Card Body">
-            </div>
-            
-            <div class="row">
-                <div class="form-group">
-                    <label>Box Number 1:</label>
-                    <input type="text" id="boxNumber1" placeholder="Contoh: VOUHU1532114761719" value="VOUHU1532114761719">
-                </div>
-                
-                <div class="form-group">
-                    <label>Box Number 2:</label>
-                    <input type="text" id="boxNumber2" placeholder="Contoh: VOUHU2532102978871" value="VOUHU2532102978871">
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label>Expire Date:</label>
-                <input type="text" id="expireDate" placeholder="Contoh: 01 November 2025" value="01 November 2025">
-            </div>
-            
-            <div class="form-group">
                 <label>Nama File Excel:</label>
-                <input type="text" id="fileName" placeholder="Contoh: XL_Barcode_Data" value="XL_Barcode_Data">
+                <input type="text" id="fileName" placeholder="Contoh: XL_Barcode_Data" value="">
                 <p class="info-text">Nama file yang akan didownload (tanpa .xlsx)</p>
             </div>
             
             <div class="row">
                 <div class="form-group">
                     <label>Serial Number Awal:</label>
-                    <input type="text" id="startSN" placeholder="Contoh: 1109940000722701" value="1109940000722701">
+                    <input type="text" id="startSN" placeholder="Contoh: 1109940000722701" value="">
                     <p class="info-text">Masukkan angka saja, tanpa spasi</p>
                 </div>
                 
                 <div class="form-group">
                     <label>Serial Number Akhir:</label>
-                    <input type="text" id="endSN" placeholder="Contoh: 1109940000723000" value="1109940000723000">
+                    <input type="text" id="endSN" placeholder="Contoh: 1109940000723000" value="">
                     <p class="info-text">Masukkan angka saja, tanpa spasi</p>
                 </div>
             </div>
@@ -331,14 +297,11 @@
             
             generatedSerials = serials;
             
-            // Update total
             document.getElementById('totalSerials').textContent = serials.length;
             
-            // Display preview
             const previewDiv = document.getElementById('serialPreview');
             previewDiv.innerHTML = '';
             
-            // Show first 30 serials with numbering
             for (let i = 0; i < Math.min(30, serials.length); i++) {
                 const numDiv = document.createElement('div');
                 numDiv.className = 'serial-number';
@@ -351,7 +314,6 @@
                 previewDiv.appendChild(valDiv);
             }
             
-            // Add "and more" message
             if (serials.length > 30) {
                 const moreDiv = document.createElement('div');
                 moreDiv.textContent = `... dan ${serials.length - 30} lainnya`;
@@ -363,7 +325,6 @@
                 previewDiv.appendChild(moreDiv);
             }
             
-            // Show preview box
             document.getElementById('previewBox').classList.add('show');
             
             showSuccess(`✅ Berhasil generate ${serials.length} serial numbers!`);
@@ -372,36 +333,28 @@
         function downloadExcel() {
             let fileName = document.getElementById('fileName').value.trim() || 'Barcode_Data';
             
-            // Clean filename (remove special characters)
             fileName = fileName.replace(/[^a-zA-Z0-9_\-]/g, '_');
             
-            // Check if serials are generated
             if (generatedSerials.length === 0) {
                 showError('Silakan generate serial numbers terlebih dahulu!');
                 return;
             }
             
-            // Create worksheet data - ONLY serial numbers WITHOUT header
             const wsData = [];
             
-            // Add all serial numbers
             generatedSerials.forEach((sn) => {
                 wsData.push([sn]);
             });
 
-            // Create workbook and worksheet
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-            // Set column width
             ws['!cols'] = [
                 { wch: 20 }
             ];
 
-            // Add worksheet to workbook
             XLSX.utils.book_append_sheet(wb, ws, 'Serial Numbers');
 
-            // Generate Excel file with custom filename
             XLSX.writeFile(wb, fileName + '.xlsx');
             
             showSuccess(`✅ File "${fileName}.xlsx" berhasil didownload dengan ${generatedSerials.length} serial numbers! Cek folder Downloads Anda.`);
@@ -410,46 +363,36 @@
         async function downloadExcelWithPicker() {
             let fileName = document.getElementById('fileName').value.trim() || 'Barcode_Data';
             
-            // Clean filename (remove special characters)
             fileName = fileName.replace(/[^a-zA-Z0-9_\-]/g, '_');
             
-            // Check if serials are generated
             if (generatedSerials.length === 0) {
                 showError('Silakan generate serial numbers terlebih dahulu!');
                 return;
             }
 
-            // Check if File System Access API is supported
             if (!window.showSaveFilePicker) {
                 showError('Browser Anda tidak mendukung fitur ini. Silakan gunakan tombol "DOWNLOAD (Default)" atau gunakan browser Chrome/Edge terbaru.');
                 return;
             }
 
             try {
-                // Create worksheet data - ONLY serial numbers WITHOUT header
                 const wsData = [];
                 
-                // Add all serial numbers
                 generatedSerials.forEach((sn) => {
                     wsData.push([sn]);
                 });
 
-                // Create workbook and worksheet
                 const wb = XLSX.utils.book_new();
                 const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-                // Set column width
                 ws['!cols'] = [
                     { wch: 20 }
                 ];
 
-                // Add worksheet to workbook
                 XLSX.utils.book_append_sheet(wb, ws, 'Serial Numbers');
 
-                // Generate Excel file as array buffer
                 const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
 
-                // Show save file picker
                 const handle = await window.showSaveFilePicker({
                     suggestedName: fileName + '.xlsx',
                     types: [{
@@ -460,12 +403,10 @@
                     }]
                 });
 
-                // Write file to selected location
                 const writable = await handle.createWritable();
                 await writable.write(wbout);
                 await writable.close();
 
-                // Show alert popup
                 alert(`✅ BERHASIL!\n\nFile "${fileName}.xlsx" telah disimpan dengan ${generatedSerials.length} serial numbers di lokasi yang Anda pilih!`);
                 
                 showSuccess(`✅ File "${fileName}.xlsx" berhasil disimpan dengan ${generatedSerials.length} serial numbers di lokasi yang Anda pilih!`);
@@ -473,7 +414,6 @@
                 if (error.name !== 'AbortError') {
                     showError('Gagal menyimpan file: ' + error.message);
                 }
-                // If user cancels, do nothing
             }
         }
         
